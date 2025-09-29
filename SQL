@@ -1,0 +1,77 @@
+
+CREATE TABLE employees (
+    emp_id SERIAL PRIMARY KEY,   -- 自增主键
+    name VARCHAR(50) NOT NULL,   -- 姓名
+    dept VARCHAR(50) NOT NULL,   -- 部门
+    position VARCHAR(50) NOT NULL, -- 职位
+    salary DECIMAL(10,2) NOT NULL, -- 工资
+    hire_date DATE NOT NULL,     -- 入职日期
+    email VARCHAR(100) UNIQUE    -- 邮箱（可选）
+);
+
+
+INSERT INTO employees (name, dept, position, salary, hire_date, email) VALUES
+('张伟', 'IT', '软件工程师', 15000.00, '2020-03-15', 'zhangwei@company.com'),
+('李娜', 'HR', '人力资源经理', 12000.00, '2019-07-01', 'lina@company.com'),
+('王强', 'IT', '高级开发', 18000.00, '2018-05-20', 'wangqiang@company.com'),
+('陈静', 'Finance', '财务分析师', 10000.00, '2021-01-10', 'chenjing@company.com'),
+('刘洋', 'IT', '前端工程师', 14000.00, '2020-11-05', 'liuyang@company.com'),
+('赵敏', 'Marketing', '市场专员', 9000.00, '2022-02-14', 'zhaomin@company.com'),
+('孙浩', 'IT', 'DevOps工程师', 16000.00, '2019-09-12', 'sunhao@company.com'),
+('周婷', 'Finance', '会计', 9500.00, '2021-06-18', 'zhouting@company.com'),
+('吴磊', 'Sales', '销售代表', 8000.00, '2022-08-23', 'wulei@company.com'),
+('徐丽', 'HR', '招聘专员', 8500.00, '2021-12-01', 'xuli@company.com'),
+('黄峰', 'IT', '数据库管理员', 17000.00, '2017-11-30', 'huangfeng@company.com'),
+('高燕', 'Marketing', '品牌经理', 13000.00, '2020-04-05', 'gaoyan@company.com'),
+('林杰', 'Sales', '销售经理', 14000.00, '2019-03-10', 'linjie@company.com'),
+('何芳', 'Finance', '财务经理', 16000.00, '2018-08-25', 'hefang@company.com'),
+('郑凯', 'IT', '软件工程师', 13000.00, '2021-07-14', 'zhengkai@company.com'),
+('谢娜', 'Marketing', '数字营销', 11000.00, '2020-10-20', 'xiena@company.com'),
+('冯涛', 'Sales', '销售代表', 8200.00, '2022-01-08', 'fengtao@company.com'),
+('邓超', 'IT', '技术主管', 20000.00, '2016-06-15', 'dengchao@company.com'),
+('韩梅', 'HR', 'HRBP', 11000.00, '2020-09-01', 'hanmei@company.com'),
+('程璐', 'Finance', '税务专员', 9800.00, '2021-03-22', 'chenglu@company.com');
+
+
+WITH rank_employees as (
+SELECT 
+ROW_NUMBER() OVER(ORDER BY dept, salary DESC) 序号,
+name AS 姓名,
+dept AS 部门,
+salary AS 工资,
+LAG(salary,1) OVER(PARTITION by dept ORDER BY salary DESC ) 当前工资上一位,
+LEAD(salary,1) OVER(PARTITION by dept ORDER BY salary DESC ) 当前工资下一位,
+FIRST_VALUE(name) OVER (PARTITION by dept ORDER BY salary desc  ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) as 该部门工资最高员工,
+LAST_VALUE(name) OVER (PARTITION by dept ORDER BY salary desc  ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) as 该部门工资最低员工,
+sum(salary) OVER(PARTITION by dept ORDER BY salary desc ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS 累计发布工资,
+sum(salary) OVER () as 公司发放工资总和,
+sum(salary) OVER(PARTITION by dept ) AS 部门工资总和,
+dense_rank() OVER (PARTITION by dept ORDER BY salary  desc) AS 员工工资在部门内的排名, 
+rank() OVER( ORDER BY salary desc) AS 员工工资在公司内的排名,   
+ROUND(avg(salary) OVER (PARTITION by dept),2) AS 当前部门平均工资,
+ROUND(avg(salary) OVER(),2) AS 整体平均工资,
+max(salary) OVER (PARTITION by dept) as 当前部门最高工资,
+FIRST_VALUE(name) OVER (ORDER BY salary desc  ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) as 最高工资员工,
+max(salary) OVER() AS 整体最高工资,
+min(salary) OVER (PARTITION by dept) as 当前部门最低工资, 
+LAST_VALUE(name) OVER (ORDER BY salary desc  ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) as 最低工资员工,
+min(salary) OVER() AS 整体最低工资
+FROM employees 
+ORDER BY dept, salary desc
+)
+
+SELECT * from  rank_employees  ORDER BY 员工工资在公司内的排名
+
+
+
+--ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW  --从第一行到当前行
+
+--ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING  --从当前行到最后一行
+
+--ROWS BETWEEN  UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING  --从第一行到最后一行
+
+--ROWS BETWEEN CURRENT ROW AND CURRENT ROW   --当前行
+ 
+--ROWS BETWEEN 2 PRECEDING AND CURRENT ROW   --前两行到当前行
+
+--ROWS BETWEEN CURRENT ROW AND 2 FOLLOWING   --当前行到后两行
