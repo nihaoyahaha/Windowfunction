@@ -1,3 +1,5 @@
+--连续的日期 - 递增的行号 = 恒定值
+
 CREATE TABLE login_log (
     user_id INT,
     login_date DATE
